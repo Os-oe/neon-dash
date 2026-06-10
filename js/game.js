@@ -145,8 +145,17 @@ class GameScene extends Phaser.Scene {
       kb.on('keydown-' + k, (e) => { if (!e.repeat) this.onJumpPressed(); });
       kb.on('keyup-' + k, () => this.onJumpReleased());
     }
-    this.input.on('pointerdown', () => this.onJumpPressed());
-    this.input.on('pointerup', () => this.onJumpReleased());
+    // Touch: ganzer Screen = Jump, unteres Band halten = Slide (Konzept 2.2)
+    this.touchSlide = false;
+    this.input.on('pointerdown', (p) => {
+      if (this.dead) { this.tryRestart(); return; }
+      if (p.worldY > 205) this.touchSlide = true;
+      else this.onJumpPressed();
+    });
+    this.input.on('pointerup', () => {
+      this.touchSlide = false;
+      this.onJumpReleased();
+    });
     for (const [key, idx] of [['ONE', 0], ['TWO', 1], ['THREE', 2]]) {
       kb.on('keydown-' + key, () => this.trySelectSkin(idx));
     }
@@ -258,8 +267,8 @@ class GameScene extends Phaser.Scene {
   }
 
   pickChunk() {
-    // früh im Run nur leichte Chunks, nie zweimal derselbe hintereinander
-    const maxDiff = this.elapsed < 20000 ? 1 : (this.elapsed < 45000 ? 2 : 3);
+    // Balancing: erste 60 s leicht — Stufe 1 bis 25 s, Stufe 2 bis 60 s, dann alles
+    const maxDiff = this.elapsed < 25000 ? 1 : (this.elapsed < 60000 ? 2 : 3);
     const pool = CHUNKS.filter((c) => c.difficulty <= maxDiff && c.id !== this.lastChunkId);
     return Phaser.Utils.Array.GetRandom(pool.length ? pool : CHUNKS);
   }
@@ -697,7 +706,7 @@ class GameScene extends Phaser.Scene {
       }
 
       // Slide: nur am Boden, Hitbox flacher
-      const wantSlide = this.keysDown.down.isDown || this.keysDown.s.isDown;
+      const wantSlide = this.keysDown.down.isDown || this.keysDown.s.isDown || this.touchSlide;
       if (wantSlide && grounded && !this.sliding) this.startSlide();
       if (!wantSlide && this.sliding) this.endSlide();
     }
@@ -910,6 +919,7 @@ window.game = new Phaser.Game({
   width: CFG.W,
   height: CFG.H,
   pixelArt: true,
+  roundPixels: true,
   backgroundColor: '#1a1c2c',
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
   scale: {
@@ -917,5 +927,13 @@ window.game = new Phaser.Game({
     zoom: Phaser.Scale.MAX_ZOOM, // Integer-Scaling
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [GameScene],
+  scene: [TitleScene, GameScene],
 });
+
+// Integer-Zoom-Fit bei Resize/Rotation; unter 1× (Mobile portrait) fraktional auf Breite
+function fitZoom() {
+  const z = Math.min(window.innerWidth / CFG.W, window.innerHeight / CFG.H);
+  window.game.scale.setZoom(z >= 1 ? Math.floor(z) : Math.max(z, 0.4));
+}
+window.addEventListener('resize', () => setTimeout(fitZoom, 50));
+window.game.events.once('ready', fitZoom);
