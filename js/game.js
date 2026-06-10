@@ -492,6 +492,38 @@ class GameScene extends Phaser.Scene {
       onUpdate: (tw) => tally.setText('SCORE ' + Math.floor(tw.getValue())),
     });
     if (isBest && dist > 0) AudioSys.fanfare();
+    this.handleLeaderboard(score, dist);
+  }
+
+  // Bestenliste: Name einmalig erfragen, danach Auto-Submit + Platz-Anzeige
+  handleLeaderboard(score, dist) {
+    if (score < 50) return; // Mini-Runs nicht nerven
+    const showRank = (r) => {
+      if (!r || !this.dead || !this.overlay) return;
+      const txt = r.improved
+        ? '★ PLATZ ' + r.rank + ' VON ' + r.count + ' ★'
+        : 'PLATZ ' + r.rank + ' VON ' + r.count + ' (Best: ' + r.best + ')';
+      this.add.text(CFG.W / 2, CFG.H / 2 - 32, txt, {
+        fontFamily: 'monospace', fontSize: '11px', color: r.improved ? '#ffd24a' : '#8a8aa8', fontStyle: 'bold',
+      }).setOrigin(0.5).setDepth(20);
+      if (r.improved && r.rank <= 10) this.burst(CFG.W / 2, CFG.H / 2 - 32, 0xffd24a, 14);
+    };
+    if (LB.name) {
+      LB.submit(score, dist).then(showRank);
+      return;
+    }
+    if (window._lbSkipped) return; // „Später" gilt für die ganze Session
+    this.input.keyboard.enabled = false; // Tippen darf keinen Restart auslösen
+    showNameInput((name) => {
+      this.input.keyboard.enabled = true;
+      this.deathAt = this.time.now; // Restart-Lockout neu, falls Enter durchrutscht
+      if (name) {
+        LB.setName(name);
+        LB.submit(score, dist).then(showRank);
+      } else {
+        window._lbSkipped = true;
+      }
+    });
   }
 
   tryRestart() {

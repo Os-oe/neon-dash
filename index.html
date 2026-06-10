@@ -12,15 +12,52 @@
     html, body { margin: 0; padding: 0; background: #0b0b12; height: 100%; overflow: hidden; }
     body { display: flex; align-items: center; justify-content: center; }
     canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    /* Bestenlisten-Namensdialog */
+    #lb-input {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      align-items: center; justify-content: center;
+      background: rgba(11, 11, 18, 0.75);
+      font-family: monospace;
+    }
+    #lb-input .box {
+      background: #1a1c2c; border: 2px solid #41f6f6; padding: 22px 26px;
+      text-align: center; color: #c8d6ff; box-shadow: 0 0 24px rgba(65, 246, 246, 0.35);
+    }
+    #lb-input h3 { margin: 0 0 4px; color: #fff; font-size: 15px; letter-spacing: 1px; }
+    #lb-input p { margin: 0 0 14px; font-size: 11px; color: #8a8aa8; }
+    #lb-name {
+      width: 200px; padding: 9px 10px; font-family: monospace; font-size: 16px;
+      background: #0b0b12; color: #41f6f6; border: 2px solid #33345c; outline: none;
+      text-align: center; text-transform: uppercase;
+    }
+    #lb-name:focus { border-color: #41f6f6; }
+    #lb-input .row { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+    #lb-input button {
+      font-family: monospace; font-size: 13px; padding: 8px 18px; cursor: pointer;
+      border: 2px solid #41f6f6; background: #41f6f6; color: #0b0b12; font-weight: bold;
+    }
+    #lb-input button#lb-skip { background: transparent; color: #8a8aa8; border-color: #33345c; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
+  <div id="lb-input">
+    <div class="box">
+      <h3>BESTENLISTE</h3>
+      <p>Dein Name (2–12 Zeichen) — einmalig, gilt für alle Runs</p>
+      <input id="lb-name" maxlength="12" autocomplete="off" spellcheck="false" placeholder="DEIN NAME">
+      <div class="row">
+        <button id="lb-ok">EINTRAGEN</button>
+        <button id="lb-skip">SPÄTER</button>
+      </div>
+    </div>
+  </div>
   <script src="js/config.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/systems.js"></script>
   <script src="js/traps.js"></script>
   <script src="js/chunks.js"></script>
+  <script src="js/leaderboard.js"></script>
   <script src="js/title.js"></script>
   <script src="js/game.js"></script>
 </body>

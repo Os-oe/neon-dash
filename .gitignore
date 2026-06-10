@@ -5,3 +5,4 @@ assets/_raw/
 .vercel/
 video/raw/
 video/*.mp4
+node_modules/

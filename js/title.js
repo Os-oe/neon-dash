@@ -41,6 +41,22 @@ class TitleScene extends Phaser.Scene {
     this.skinText = this.add.text(CFG.W / 2, 250, '', { ...style, fontSize: '9px' }).setOrigin(0.5).setDepth(10);
     this.renderSkinLine();
 
+    // Bestenliste: [B] oder Tap auf den Button
+    this.lbHint = this.add.text(CFG.W - 8, 250, '[B] BESTENLISTE', { ...style, fontSize: '9px', color: '#ffd24a' })
+      .setOrigin(1, 0.5).setDepth(10).setInteractive({ useHandCursor: true });
+    this.lbPanel = this.add.container(CFG.W / 2, CFG.H / 2).setDepth(30).setVisible(false);
+    const panelBg = this.add.rectangle(0, 0, 264, 196, 0x0b0b12, 0.94).setStrokeStyle(2, 0x41f6f6);
+    this.lbText = this.add.text(0, -6, 'lade…', { fontFamily: 'monospace', fontSize: '10px', color: '#c8d6ff', align: 'left', lineSpacing: 5 }).setOrigin(0.5);
+    const panelTitle = this.add.text(0, -82, '★ BESTENLISTE ★', { fontFamily: 'monospace', fontSize: '12px', color: '#ffd24a', fontStyle: 'bold' }).setOrigin(0.5);
+    this.lbPanel.add([panelBg, panelTitle, this.lbText]);
+    const toggleLb = () => {
+      this.lbPanel.setVisible(!this.lbPanel.visible);
+      if (this.lbPanel.visible) this.loadLb();
+    };
+    this.input.keyboard.on('keydown-B', toggleLb);
+    this.lbHint.on('pointerdown', (p, lx, ly, ev) => { ev.stopPropagation(); toggleLb(); });
+    panelBg.setInteractive().on('pointerdown', (p, lx, ly, ev) => { ev.stopPropagation(); toggleLb(); });
+
     const start = () => {
       AudioSys.ensure();
       AudioSys.startMusic();
@@ -59,6 +75,20 @@ class TitleScene extends Phaser.Scene {
         this.renderSkinLine();
       });
     }
+  }
+
+  async loadLb() {
+    const data = await LB.top();
+    if (!this.lbText || !this.lbText.active) return;
+    if (!data || !data.top.length) {
+      this.lbText.setText('noch keine Einträge —\nsei der/die Erste!');
+      return;
+    }
+    const lines = data.top.slice(0, 10).map((e, i) => {
+      const me = LB.name && e.name.toLowerCase() === LB.name.toLowerCase() ? ' ◂' : '';
+      return String(i + 1).padStart(2) + '. ' + e.name.padEnd(13) + String(e.score).padStart(6) + me;
+    });
+    this.lbText.setText(lines.join('\n'));
   }
 
   renderSkinLine() {
