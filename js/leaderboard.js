@@ -36,6 +36,17 @@ const LB = {
     this.name = n;
     localStorage.setItem('neon-dash.player', n);
   },
+
+  // freiwillige E-Mail (Making-of + Updates) — fire-and-forget
+  subscribe(email) {
+    try {
+      fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).catch(() => {});
+    } catch { /* offline egal */ }
+  },
 };
 
 // Namens-Dialog: einmalig beim ersten eintragswürdigen Run. ENTER/OK bestätigt,
@@ -43,6 +54,7 @@ const LB = {
 function showNameInput(onDone) {
   const wrap = document.getElementById('lb-input');
   const field = document.getElementById('lb-name');
+  const mail = document.getElementById('lb-mail');
   const ok = document.getElementById('lb-ok');
   const skip = document.getElementById('lb-skip');
   wrap.style.display = 'flex';
@@ -51,19 +63,23 @@ function showNameInput(onDone) {
 
   const close = (name) => {
     wrap.style.display = 'none';
-    ok.onclick = skip.onclick = field.onkeydown = null;
+    ok.onclick = skip.onclick = field.onkeydown = mail.onkeydown = null;
     onDone(name);
   };
   const confirm = () => {
     const v = field.value.trim().slice(0, 12);
-    if (v.length >= 2) close(v);
-    else field.style.borderColor = '#ff4040';
+    if (v.length < 2) { field.style.borderColor = '#ff4040'; return; }
+    const m = mail.value.trim();
+    if (m && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m)) LB.subscribe(m);
+    close(v);
   };
-  ok.onclick = confirm;
-  skip.onclick = () => close(null);
-  field.onkeydown = (e) => {
+  const keys = (e) => {
     e.stopPropagation(); // Spiel-Input nicht triggern
     if (e.key === 'Enter') confirm();
     if (e.key === 'Escape') close(null);
   };
+  ok.onclick = confirm;
+  skip.onclick = () => close(null);
+  field.onkeydown = keys;
+  mail.onkeydown = keys;
 }

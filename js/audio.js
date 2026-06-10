@@ -13,7 +13,14 @@ const AudioSys = {
   musicFilter: null,
   musicStarted: false,
   slideNode: null,
-  muted: false,
+  muted: localStorage.getItem('neon-dash.muted') === '1',
+
+  setMuted(on) {
+    this.muted = on;
+    localStorage.setItem('neon-dash.muted', on ? '1' : '0');
+    if (this.musicEl) this.musicEl.muted = on;
+    if (on) this.slideStop();
+  },
 
   // nach erster User-Geste aufrufen (Autoplay-Policy)
   ensure() {
@@ -38,6 +45,7 @@ const AudioSys = {
       this.musicStarted = true;
       this.musicEl = new Audio('assets/audio/music-v1.mp3');
       this.musicEl.loop = true;
+      this.musicEl.muted = this.muted;
       const src = this.ctx.createMediaElementSource(this.musicEl);
       this.musicFilter = this.ctx.createBiquadFilter();
       this.musicFilter.type = 'lowpass';

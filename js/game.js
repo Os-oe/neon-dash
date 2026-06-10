@@ -173,6 +173,16 @@ class GameScene extends Phaser.Scene {
     this.bestText = this.add.text(CFG.W - 6, 4, 'BEST ' + Save.data.best + ' m', style).setOrigin(1, 0).setDepth(10);
     this.puText = this.add.text(CFG.W - 6, 18, '', { ...style, color: '#6ee787' }).setOrigin(1, 0).setDepth(10);
     this.odBar = this.add.rectangle(CFG.W / 2, 24, 0, 4, CFG.COL.overdrive).setDepth(10).setVisible(false);
+    // Mute: Icon oben rechts + Taste M
+    this.muteBtn = this.add.text(CFG.W - 6, 32, AudioSys.muted ? '♪ AUS' : '♪', {
+      fontFamily: 'monospace', fontSize: '10px', color: AudioSys.muted ? '#5a5a86' : '#41f6f6',
+    }).setOrigin(1, 0).setDepth(10).setInteractive({ useHandCursor: true });
+    const toggleMute = () => {
+      AudioSys.setMuted(!AudioSys.muted);
+      this.muteBtn.setText(AudioSys.muted ? '♪ AUS' : '♪').setColor(AudioSys.muted ? '#5a5a86' : '#41f6f6');
+    };
+    this.muteBtn.on('pointerdown', (p, lx, ly, ev) => { ev.stopPropagation(); toggleMute(); });
+    this.input.keyboard.on('keydown-M', toggleMute);
     // Bestmarken-Geist
     this.ghostLine = this.add.rectangle(0, CFG.H / 2 + 20, 2, CFG.H - 80, 0xffffff, 0.35).setDepth(3).setVisible(false);
     this.ghostLabel = this.add.text(0, 56, 'BEST', { fontFamily: 'monospace', fontSize: '8px', color: '#ffffff' })
@@ -483,6 +493,29 @@ class GameScene extends Phaser.Scene {
       fontFamily: 'monospace', fontSize: '10px', color: '#ffffff', align: 'center',
     }).setOrigin(0.5).setDepth(20);
 
+    // Share-Button + OsAI-Credit (Footer des Game-Over-Screens)
+    const shareBtn = this.add.text(CFG.W / 2 - 70, CFG.H - 10, '[ SCORE TEILEN ]', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#ffd24a', fontStyle: 'bold',
+    }).setOrigin(0.5, 1).setDepth(20).setInteractive({ useHandCursor: true });
+    shareBtn.on('pointerdown', (p, lx, ly, ev) => {
+      ev.stopPropagation();
+      const txt = score + ' Punkte bei NEON DASH' + (this.lastRank ? ' (Platz ' + this.lastRank + ')' : '')
+        + ' — schlag das: https://neon-dash.demo.osai.solutions';
+      AudioSys.ui();
+      if (navigator.share) {
+        navigator.share({ text: txt }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(txt).then(() => this.toast('KOPIERT — einfach posten!', '#ffd24a')).catch(() => {});
+      }
+    });
+    const credit = this.add.text(CFG.W / 2 + 88, CFG.H - 10, 'GEBAUT VON OsAI ↗', {
+      fontFamily: 'monospace', fontSize: '10px', color: '#8a8aa8',
+    }).setOrigin(0.5, 1).setDepth(20).setInteractive({ useHandCursor: true });
+    credit.on('pointerdown', (p, lx, ly, ev) => {
+      ev.stopPropagation();
+      window.open('https://osai.solutions?utm_source=neon-dash', '_blank');
+    });
+
     // Score-Tally mit Count-up (snappt nie)
     const tally = this.add.text(CFG.W / 2, CFG.H / 2 - 52, 'SCORE 0', {
       fontFamily: 'monospace', fontSize: '18px', color: '#41f6f6', fontStyle: 'bold', align: 'center',
@@ -503,6 +536,7 @@ class GameScene extends Phaser.Scene {
       const txt = r.improved
         ? '★ PLATZ ' + r.rank + ' VON ' + r.count + ' ★'
         : 'PLATZ ' + r.rank + ' VON ' + r.count + ' (Best: ' + r.best + ')';
+      this.lastRank = r.rank;
       this.add.text(CFG.W / 2, CFG.H / 2 - 32, txt, {
         fontFamily: 'monospace', fontSize: '11px', color: r.improved ? '#ffd24a' : '#8a8aa8', fontStyle: 'bold',
       }).setOrigin(0.5).setDepth(20);

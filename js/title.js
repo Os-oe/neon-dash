@@ -41,6 +41,15 @@ class TitleScene extends Phaser.Scene {
     this.skinText = this.add.text(CFG.W / 2, 250, '', { ...style, fontSize: '9px' }).setOrigin(0.5).setDepth(10);
     this.renderSkinLine();
 
+    // OsAI-Credit (klickbar) + Mute-Taste
+    const credit = this.add.text(8, 8, 'von OsAI ↗', { ...style, fontSize: '9px', color: '#8a8aa8' })
+      .setOrigin(0, 0).setDepth(10).setInteractive({ useHandCursor: true });
+    credit.on('pointerdown', (p, lx, ly, ev) => {
+      ev.stopPropagation();
+      window.open('https://osai.solutions?utm_source=neon-dash', '_blank');
+    });
+    this.input.keyboard.on('keydown-M', () => AudioSys.setMuted(!AudioSys.muted));
+
     // Bestenliste: [B] oder Tap auf den Button
     this.lbHint = this.add.text(CFG.W - 8, 250, '[B] BESTENLISTE', { ...style, fontSize: '9px', color: '#ffd24a' })
       .setOrigin(1, 0.5).setDepth(10).setInteractive({ useHandCursor: true });

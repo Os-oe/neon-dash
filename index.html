@@ -31,6 +31,13 @@
       text-align: center; text-transform: uppercase;
     }
     #lb-name:focus { border-color: #41f6f6; }
+    #lb-input .mail-label { margin: 16px 0 6px; font-size: 10px; color: #8a8aa8; }
+    #lb-mail {
+      width: 220px; padding: 7px 10px; font-family: monospace; font-size: 12px;
+      background: #0b0b12; color: #c8d6ff; border: 2px solid #33345c; outline: none; text-align: center;
+    }
+    #lb-mail:focus { border-color: #41f6f6; }
+    #lb-input .mail-hint { margin: 6px 0 0; font-size: 9px; color: #5a5a86; }
     #lb-input .row { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
     #lb-input button {
       font-family: monospace; font-size: 13px; padding: 8px 18px; cursor: pointer;
@@ -39,6 +46,7 @@
     #lb-input button#lb-skip { background: transparent; color: #8a8aa8; border-color: #33345c; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script defer src="/_vercel/insights/script.js" onerror="this.remove()"></script>
 </head>
 <body>
   <div id="lb-input">
@@ -46,6 +54,9 @@
       <h3>BESTENLISTE</h3>
       <p>Dein Name (2–12 Zeichen) — einmalig, gilt für alle Runs</p>
       <input id="lb-name" maxlength="12" autocomplete="off" spellcheck="false" placeholder="DEIN NAME">
+      <p class="mail-label">E-Mail (optional) — Making-of + Updates zum Projekt</p>
+      <input id="lb-mail" type="email" maxlength="120" autocomplete="email" placeholder="name@firma.de">
+      <p class="mail-hint">kein Spam · jederzeit abmeldbar</p>
       <div class="row">
         <button id="lb-ok">EINTRAGEN</button>
         <button id="lb-skip">SPÄTER</button>
