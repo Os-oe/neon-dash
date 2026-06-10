@@ -7,6 +7,23 @@ class GameScene extends Phaser.Scene {
     super('game');
   }
 
+  preload() {
+    for (const s of ['volt', 'blaze', 'ori']) {
+      for (const p of ['run1', 'run2', 'run3', 'run4', 'jump', 'slide', 'fly', 'death']) {
+        this.load.image(s + '-' + p, 'assets/sprites/' + s + '-' + p + '.png');
+      }
+    }
+    const imgs = {
+      sky: 'layers/sky.png', far: 'layers/far.png', near: 'layers/near.png', signs: 'layers/signs.png',
+      roof: 'layers/roof.png', crumbleTex: 'layers/crumble.png', logo: 'ui/logo.png',
+      block: 'sprites/block.png', bar: 'sprites/bar.png', wall: 'sprites/wall.png',
+      drone: 'sprites/drone-b.png', pylon: 'sprites/pylon.png', cell: 'sprites/cell.png',
+      'pu-magnet': 'sprites/pu-magnet.png', 'pu-shield': 'sprites/pu-shield.png',
+      'pu-x2': 'sprites/pu-x2.png', 'pu-od': 'sprites/pu-od.png',
+    };
+    for (const [k, v] of Object.entries(imgs)) this.load.image(k, 'assets/' + v);
+  }
+
   create() {
     if (!Save.data) Save.load();
     this.physics.world.timeScale = 1; // Slow-Mo-Reste vom letzten Run zurücksetzen
@@ -55,6 +72,27 @@ class GameScene extends Phaser.Scene {
       gfx.destroy();
     }
 
+    // Parallax-Stadt (Konzept 2.8): Himmel → ferne Skyline → nahe Skyline → Neon-Schilder
+    // Distanz-Dimming (Tint + Alpha), damit das Spielfeld vorne lesbar bleibt
+    this.bgLayers = [];
+    this.bgSpeeds = [0.03, 0.12, 0.28, 0.55];
+    const layerCfg = [
+      { key: 'sky', tint: 0xffffff, alpha: 1 },
+      { key: 'far', tint: 0x6a6a92, alpha: 0.95 },
+      { key: 'near', tint: 0x9090b8, alpha: 0.95 },
+      { key: 'signs', tint: 0xb8b8d0, alpha: 0.9 },
+    ];
+    for (const [i, cfg] of layerCfg.entries()) {
+      this.bgLayers.push(
+        this.add.tileSprite(CFG.W / 2, CFG.H / 2, CFG.W, CFG.H, cfg.key)
+          .setDepth(i).setTint(cfg.tint).setAlpha(cfg.alpha)
+      );
+    }
+    // dunkle Lauf-Zone hinter dem Spielfeld, damit Held + Fallen vorne knallen
+    this.add.rectangle(CFG.W / 2, 205, CFG.W, 130, 0x0b0b12, 0.32).setDepth(3.5);
+    // Farb-Grading je Tageszeit-Phase (wirkt auf alle Bild-Layer)
+    this.gradeOverlay = this.add.rectangle(CFG.W / 2, CFG.H / 2, CFG.W, CFG.H, 0x000000, 0).setDepth(8);
+
     // Welt-Gruppen
     this.groundGroup = this.physics.add.group({ allowGravity: false, immovable: true });
     this.obstacleGroup = this.physics.add.group({ allowGravity: false, immovable: true });
@@ -70,6 +108,10 @@ class GameScene extends Phaser.Scene {
     body.setSize(p.hitW, p.hitH);
     body.setOffset((p.drawW - p.hitW) / 2, p.drawH - p.hitH);
     body.setMaxVelocityY(CFG.MAX_FALL);
+    // Physik-Puppet: der unsichtbare Body steuert, gezeichnet wird der Pose-Sprite
+    this.player.setVisible(false);
+    this.playerSpr = this.add.sprite(p.x, CFG.GROUND_Y, this.skin.id + '-run1').setOrigin(0.5, 1).setDepth(6);
+    this.makeAnims();
 
     this.physics.add.collider(this.player, this.groundGroup, (pl, g) => {
       if (g.isCrumble && pl.body.touching.down) Traps.triggerCrumble(this, g);
@@ -120,6 +162,18 @@ class GameScene extends Phaser.Scene {
 
   // ---------- Welt-Bau ----------
 
+  makeAnims() {
+    for (const s of ['volt', 'blaze', 'ori']) {
+      if (this.anims.exists(s + '-run')) continue;
+      this.anims.create({
+        key: s + '-run',
+        frames: ['run1', 'run2', 'run3', 'run4'].map((p) => ({ key: s + '-' + p })),
+        frameRate: 12,
+        repeat: -1,
+      });
+    }
+  }
+
   makeWorldRect(x, y, w, h, color, group) {
     const rect = this.add.rectangle(x + w / 2, y + h / 2, w, h, color);
     group.add(rect); // Physics-Group aktiviert den Body und wendet die Group-Defaults an
@@ -127,32 +181,46 @@ class GameScene extends Phaser.Scene {
     return rect;
   }
 
+  // Sprite mit Boden-Anker (origin 0.5/1) + Hitbox kleiner als das Visual
+  makeWorldSprite(cx, bottomY, key, group, bodyW, bodyH) {
+    const s = this.add.sprite(cx, bottomY, key).setOrigin(0.5, 1).setDepth(5);
+    group.add(s);
+    s.body.setSize(bodyW, bodyH);
+    s.body.setOffset((s.width - bodyW) / 2, s.height - bodyH);
+    s.body.setVelocityX(-this.speed);
+    return s;
+  }
+
   makeGround(x, w, crumble) {
     const h = CFG.H - CFG.GROUND_Y;
-    const color = crumble ? CFG.COL.crumble : this.groundColor;
-    const g = this.makeWorldRect(x, CFG.GROUND_Y, w, h, color, this.groundGroup);
+    const g = this.add.tileSprite(x + w / 2, CFG.GROUND_Y + h / 2, w, h, crumble ? 'crumbleTex' : 'roof').setDepth(4);
+    this.groundGroup.add(g);
+    g.tilePositionX = x % 96; // Muster weltfest, damit Nahtstellen nicht springen
+    g.body.setVelocityX(-this.speed);
     g.body.friction.x = 0; // Boden zieht Spieler nicht mit nach links
     g.isCrumble = !!crumble;
     g.isGround = true;
-    const edge = this.add.rectangle(x + w / 2, CFG.GROUND_Y + 1, w, 2, CFG.COL.groundEdge);
-    g.edge = edge;
     return g;
   }
 
   makeCell(x, y) {
-    const c = this.makeWorldRect(x - 3, y - 3, 6, 6, CFG.COL.cell, this.cellGroup);
+    const c = this.add.sprite(x, y, 'cell').setDepth(5);
+    this.cellGroup.add(c);
+    c.body.setSize(11, 11);
+    c.body.setOffset(-1.5, -1.5); // Pickup-Hitbox großzügiger als das Visual
+    c.body.setVelocityX(-this.speed);
     c.isCell = true;
-    this.tweens.add({ targets: c, alpha: 0.6, duration: 300 + (x % 200), yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: c, alpha: 0.65, duration: 300 + (x % 200), yoyo: true, repeat: -1 });
     return c;
   }
 
   makePU(x, y, type) {
-    const colors = { magnet: CFG.COL.magnet, shield: CFG.COL.shield, x2: CFG.COL.x2, od: CFG.COL.overdrive };
-    const pu = this.makeWorldRect(x - 6, y - 6, 12, 12, colors[type], this.puGroup);
+    const pu = this.add.sprite(x, y, 'pu-' + type).setDepth(5);
+    this.puGroup.add(pu);
+    pu.body.setSize(16, 16);
+    pu.body.setOffset(-2, -2);
+    pu.body.setVelocityX(-this.speed);
     pu.puType = type;
-    const label = { magnet: 'M', shield: 'S', x2: '2', od: '!' }[type];
-    pu.label = this.add.text(pu.x, pu.y, label, { fontFamily: 'monospace', fontSize: '9px', color: '#16161e', fontStyle: 'bold' })
-      .setOrigin(0.5).setDepth(7);
     this.tweens.add({ targets: pu, scaleX: 1.25, scaleY: 1.25, duration: 350, yoyo: true, repeat: -1 });
     return pu;
   }
@@ -212,7 +280,6 @@ class GameScene extends Phaser.Scene {
     if (!s) return;
     if (Skins.select(s.id)) {
       this.skin = s;
-      if (!this.sliding) this.player.setFillStyle(this.odActive ? CFG.COL.overdrive : s.color);
       this.toast(s.name + ' aktiviert', '#c8d6ff');
     } else {
       this.toast(s.name + ' gesperrt — ' + s.cost + '⚡ nötig', '#ff8c8c');
@@ -238,8 +305,8 @@ class GameScene extends Phaser.Scene {
   collectPU(pu) {
     if (this.dead) return;
     const type = pu.puType;
-    if (pu.label) pu.label.destroy();
-    this.burst(pu.x, pu.y, pu.fillColor, 12);
+    const puCols = { magnet: CFG.COL.magnet, shield: CFG.COL.shield, x2: CFG.COL.x2, od: CFG.COL.overdrive };
+    this.burst(pu.x, pu.y, puCols[type], 12);
     pu.destroy();
     if (type === 'magnet') { this.magnetUntil = this.time.now + CFG.MAGNET_MS; this.toast('MAGNET', '#58abf5'); }
     if (type === 'shield') { this.shieldOn = true; this.toast('SCHILD', '#6ee787'); }
@@ -267,7 +334,6 @@ class GameScene extends Phaser.Scene {
       o.destroy();
     }
     this.cameras.main.flash(220, 255, 200, 120);
-    this.player.setFillStyle(CFG.COL.overdrive);
     this.odBar.setVisible(true);
     this.toast('OVERDRIVE!', '#ff8c42');
     this.checkMissions();
@@ -275,8 +341,7 @@ class GameScene extends Phaser.Scene {
 
   endOverdrive() {
     this.odActive = false;
-    this.player.setFillStyle(this.sliding ? this.skin.slideColor : this.skin.color);
-    this.player.setAlpha(1);
+    this.playerSpr.setAlpha(1);
     this.odBar.setVisible(false);
     this.invulnUntil = this.time.now + 600; // kurze Schonfrist nach Modus-Ende
   }
@@ -314,7 +379,8 @@ class GameScene extends Phaser.Scene {
     this.dead = true;
     this.deathAt = this.time.now;
     this.physics.pause();
-    this.player.setFillStyle(CFG.COL.dead);
+    this.playerSpr.anims.stop();
+    this.playerSpr.setTexture(this.skin.id + '-death').setAlpha(1);
 
     // Persistenz + Missionen
     const dist = Math.floor(this.distance);
@@ -437,6 +503,11 @@ class GameScene extends Phaser.Scene {
     this.spawnX -= this.speed * dt;
     while (this.spawnX < CFG.W + 250) this.spawnChunk(this.pickChunk());
 
+    // Parallax
+    for (let i = 0; i < this.bgLayers.length; i++) {
+      this.bgLayers[i].tilePositionX += this.speed * dt * this.bgSpeeds[i];
+    }
+
     this.syncWorld(dt);
     Traps.update(this, time, dt);
     this.updatePlayer(time, dt);
@@ -526,6 +597,23 @@ class GameScene extends Phaser.Scene {
 
     // In die Lücke gefallen
     if (this.player.y > CFG.H + 30) return this.die();
+
+    // Pose-Sprite folgt dem Physik-Puppet (in Game-Pixeln gerundet)
+    const spr = this.playerSpr;
+    spr.setPosition(Math.round(body.center.x), Math.round(body.bottom));
+    const pre = this.skin.id;
+    if (this.odActive) {
+      spr.anims.stop();
+      spr.setTexture(pre + '-fly');
+    } else if (this.sliding) {
+      spr.anims.stop();
+      spr.setTexture(pre + '-slide');
+    } else if (!grounded) {
+      spr.anims.stop();
+      spr.setTexture(pre + '-jump');
+    } else {
+      spr.play(pre + '-run', true);
+    }
   }
 
   updatePowerups(time) {
@@ -543,7 +631,7 @@ class GameScene extends Phaser.Scene {
         }
         // letzte 2 s: Warn-Blinken
         if (left < CFG.OVERDRIVE_WARN_MS) {
-          this.player.setAlpha(Math.floor(time / 110) % 2 === 0 ? 0.5 : 1);
+          this.playerSpr.setAlpha(Math.floor(time / 110) % 2 === 0 ? 0.5 : 1);
         }
       }
     }
@@ -595,16 +683,17 @@ class GameScene extends Phaser.Scene {
       }
     }
 
-    // Paletten-Swap Abend→Nacht→Dämmerung alle 500 m
+    // Paletten-Swap Abend→Nacht→Dämmerung alle 500 m (Farb-Grading über den Bild-Layern)
     const pi = (1 + Math.floor(this.distance / CFG.PALETTE_M)) % CFG.PALETTES.length;
     if (pi !== this.paletteIdx) {
       this.paletteIdx = pi;
-      const pal = CFG.PALETTES[pi];
-      this.groundColor = pal.ground;
-      this.cameras.main.setBackgroundColor(pal.bg);
-      this.groundGroup.children.iterate((g) => {
-        if (g && g.isGround && !g.isCrumble) g.setFillStyle(pal.ground);
-      });
+      const grade = [
+        { color: 0xff2079, alpha: 0.07 }, // Abend: pinker Schimmer
+        { color: 0x000000, alpha: 0 },    // Nacht: neutral
+        { color: 0xff8c42, alpha: 0.09 }, // Dämmerung: warmer Schimmer
+      ][pi];
+      this.gradeOverlay.setFillStyle(grade.color, this.gradeOverlay.fillAlpha);
+      this.tweens.add({ targets: this.gradeOverlay, fillAlpha: grade.alpha, duration: 1500 });
     }
   }
 
@@ -626,7 +715,6 @@ class GameScene extends Phaser.Scene {
     const p = CFG.PLAYER;
     this.player.body.setSize(p.hitW, p.slideH);
     this.player.body.setOffset((p.drawW - p.hitW) / 2, p.drawH - p.slideH);
-    if (!this.odActive) this.player.setFillStyle(this.skin.slideColor);
   }
 
   endSlide() {
@@ -635,7 +723,6 @@ class GameScene extends Phaser.Scene {
     const p = CFG.PLAYER;
     this.player.body.setSize(p.hitW, p.hitH);
     this.player.body.setOffset((p.drawW - p.hitW) / 2, p.drawH - p.hitH);
-    if (!this.odActive) this.player.setFillStyle(this.skin.color);
   }
 }
 
