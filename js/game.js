@@ -22,8 +22,8 @@ class GameScene extends Phaser.Scene {
     this.sliding = false;
 
     // Welt-Gruppen: Boden trägt, Hindernisse töten
-    this.groundGroup = this.physics.add.group();
-    this.obstacleGroup = this.physics.add.group();
+    this.groundGroup = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.obstacleGroup = this.physics.add.group({ allowGravity: false, immovable: true });
 
     // Spieler
     const p = CFG.PLAYER;
@@ -67,12 +67,8 @@ class GameScene extends Phaser.Scene {
 
   makeWorldRect(x, y, w, h, color, group) {
     const rect = this.add.rectangle(x + w / 2, y + h / 2, w, h, color);
-    this.physics.add.existing(rect);
-    const b = rect.body;
-    b.setAllowGravity(false);
-    b.setImmovable(true);
-    b.setVelocityX(-this.speed);
-    group.add(rect);
+    group.add(rect); // Physics-Group aktiviert den Body und wendet die Group-Defaults an
+    rect.body.setVelocityX(-this.speed);
     return rect;
   }
 
@@ -249,8 +245,7 @@ class GameScene extends Phaser.Scene {
   }
 }
 
-// eslint-disable-next-line no-unused-vars
-const game = new Phaser.Game({
+window.game = new Phaser.Game({
   type: Phaser.AUTO,
   width: CFG.W,
   height: CFG.H,
