@@ -57,6 +57,17 @@ class GameScene extends Phaser.Scene {
     this.jumpHeld = false;
     this.sliding = false;
 
+    // Juice-State (Konzept 2.6)
+    this.trauma = 0;          // Screen-Shake, decaying
+    this.wasGrounded = true;
+    this.lastFallV = 0;
+    this.cellChain = 0;       // Pitch-Ladder
+    this.lastCellAt = -9999;
+    this.lastTrailAt = 0;
+    this.lastSpeedLineAt = 0;
+    this.lastDustAt = 0;
+    this.lastOdTickAt = 0;
+
     // Meilensteine / Geist / Palette
     this.nextMilestone = CFG.MILESTONE_M;
     this.ghostPassed = false;
@@ -259,6 +270,9 @@ class GameScene extends Phaser.Scene {
     if (this.dead) { this.tryRestart(); return; }
     this.jumpHeld = true;
     this.jumpBufferedAt = this.time.now;
+    // Audio NACH der Input-Logik — ein Audio-Problem darf nie einen Sprung fressen
+    AudioSys.ensure();
+    AudioSys.startMusic();
   }
 
   onJumpReleased() {
@@ -280,6 +294,7 @@ class GameScene extends Phaser.Scene {
     if (!s) return;
     if (Skins.select(s.id)) {
       this.skin = s;
+      AudioSys.ui();
       this.toast(s.name + ' aktiviert', '#c8d6ff');
     } else {
       this.toast(s.name + ' gesperrt — ' + s.cost + '⚡ nötig', '#ff8c8c');
@@ -290,6 +305,11 @@ class GameScene extends Phaser.Scene {
 
   collectCell(cell) {
     if (this.dead) return;
+    // Pitch-Ladder: Kette steigt pro Zelle, Reset bei Lücke
+    if (this.time.now - this.lastCellAt > 1500) this.cellChain = 0;
+    this.lastCellAt = this.time.now;
+    AudioSys.cell(this.cellChain);
+    this.cellChain += 1;
     this.combo += 1;
     this.mult = Math.min(1 + Math.floor(this.combo / CFG.COMBO_PER_MULT), CFG.COMBO_MAX_MULT);
     this.stats.runMult = Math.max(this.stats.runMult, this.mult);
@@ -308,6 +328,10 @@ class GameScene extends Phaser.Scene {
     const puCols = { magnet: CFG.COL.magnet, shield: CFG.COL.shield, x2: CFG.COL.x2, od: CFG.COL.overdrive };
     this.burst(pu.x, pu.y, puCols[type], 12);
     pu.destroy();
+    if (type !== 'od') {
+      AudioSys.powerup();
+      this.flash();
+    }
     if (type === 'magnet') { this.magnetUntil = this.time.now + CFG.MAGNET_MS; this.toast('MAGNET', '#58abf5'); }
     if (type === 'shield') { this.shieldOn = true; this.toast('SCHILD', '#6ee787'); }
     if (type === 'x2') { this.x2Until = this.time.now + CFG.X2_MS; this.toast('×2 PUNKTE', '#ffd24a'); }
@@ -336,6 +360,9 @@ class GameScene extends Phaser.Scene {
     this.cameras.main.flash(220, 255, 200, 120);
     this.odBar.setVisible(true);
     this.toast('OVERDRIVE!', '#ff8c42');
+    AudioSys.odStart();
+    AudioSys.setOverdrive(true);
+    this.addTrauma(0.5);
     this.checkMissions();
   }
 
@@ -344,6 +371,8 @@ class GameScene extends Phaser.Scene {
     this.playerSpr.setAlpha(1);
     this.odBar.setVisible(false);
     this.invulnUntil = this.time.now + 600; // kurze Schonfrist nach Modus-Ende
+    AudioSys.odEnd();
+    AudioSys.setOverdrive(false);
   }
 
   // ---------- Treffer / Tod ----------
@@ -357,6 +386,9 @@ class GameScene extends Phaser.Scene {
       o.destroy();
       this.endOverdrive();
       this.cameras.main.flash(120, 255, 255, 255);
+      AudioSys.hit();
+      this.hitStop(45);
+      this.addTrauma(0.4);
       return;
     }
     if (this.time.now < this.invulnUntil) return;
@@ -369,6 +401,10 @@ class GameScene extends Phaser.Scene {
       Traps.destroyExtras(o);
       o.destroy();
       this.toast('SCHILD ZERPLATZT', '#6ee787');
+      AudioSys.shieldPop();
+      this.hitStop(45);
+      this.addTrauma(0.35);
+      this.flash(0x6ee787);
       return;
     }
     this.die();
@@ -378,9 +414,24 @@ class GameScene extends Phaser.Scene {
     if (this.dead) return;
     this.dead = true;
     this.deathAt = this.time.now;
-    this.physics.pause();
+    if (this.sliding) AudioSys.slideStop();
+    if (this.odActive) AudioSys.setOverdrive(false);
+
+    // Tod-Sequenz (Konzept 2.6/8): Hit-Stop → Slow-Mo 0,2× → Desaturierung → Knock-back-Bogen
+    AudioSys.hit();
+    AudioSys.death();
+    AudioSys.duck(true);
+    this.addTrauma(0.7);
+    this.cameras.main.flash(90, 255, 255, 255);
     this.playerSpr.anims.stop();
     this.playerSpr.setTexture(this.skin.id + '-death').setAlpha(1);
+    this.physics.world.timeScale = 60; // Hit-Stop
+    this.time.delayedCall(60, () => { if (this.dead) this.physics.world.timeScale = 5; }); // Slow-Mo 0,2×
+    this.desat = this.add.rectangle(CFG.W / 2, CFG.H / 2, CFG.W, CFG.H, 0x40445c, 0.45).setDepth(8.5);
+    const body = this.player.body;
+    body.checkCollision.none = true;
+    body.setVelocity(-50, -260);
+    body.setGravityY(CFG.GRAV_DOWN);
 
     // Persistenz + Missionen
     const dist = Math.floor(this.distance);
@@ -391,10 +442,19 @@ class GameScene extends Phaser.Scene {
     const completed = Missions.check(this.stats);
     Save.persist();
 
+    this.time.delayedCall(620, () => {
+      this.physics.pause();
+      this.physics.world.timeScale = 1;
+      this.showGameOver(isBest, completed);
+    });
+  }
+
+  showGameOver(isBest, completed) {
+    const dist = this.stats.runDist;
     const score = Math.floor(this.distance) + this.cellScore;
     const lines = [
-      'GAME OVER',
-      'SCORE ' + score + '   ' + dist + ' m' + (isBest ? ' ★ NEU' : ''),
+      '',
+      dist + ' m' + (isBest ? ' ★ NEU' : ''),
       '⚡' + this.stats.runCells + '   Combo ×' + this.stats.runMult + '   Near-Miss ' + this.stats.runNear,
       '',
     ];
@@ -410,14 +470,28 @@ class GameScene extends Phaser.Scene {
     }).join('  '));
     lines.push('SPACE = RESTART');
 
-    this.overlay = this.add.text(CFG.W / 2, CFG.H / 2, lines.join('\n'), {
+    this.overlay = this.add.text(CFG.W / 2, CFG.H / 2 + 14, lines.join('\n'), {
       fontFamily: 'monospace', fontSize: '10px', color: '#ffffff', align: 'center',
     }).setOrigin(0.5).setDepth(20);
+
+    // Score-Tally mit Count-up (snappt nie)
+    const tally = this.add.text(CFG.W / 2, CFG.H / 2 - 52, 'SCORE 0', {
+      fontFamily: 'monospace', fontSize: '18px', color: '#41f6f6', fontStyle: 'bold', align: 'center',
+    }).setOrigin(0.5).setDepth(20);
+    this.tweens.addCounter({
+      from: 0, to: score, duration: 700, ease: 'Cubic.easeOut',
+      onUpdate: (tw) => tally.setText('SCORE ' + Math.floor(tw.getValue())),
+    });
+    if (isBest && dist > 0) AudioSys.fanfare();
   }
 
   tryRestart() {
     // 250 ms Lockout, damit ein gehaltener Sprung-Input nicht sofort neu startet
-    if (this.time.now - this.deathAt > 250) this.scene.restart();
+    if (this.time.now - this.deathAt > 250) {
+      AudioSys.ui();
+      AudioSys.duck(false);
+      this.scene.restart();
+    }
   }
 
   // ---------- Feedback-Helfer (Greybox-Stufe; voller Juice-Pass = Phase 4) ----------
@@ -443,6 +517,7 @@ class GameScene extends Phaser.Scene {
   }
 
   milestoneBanner(m) {
+    AudioSys.milestone();
     const t = this.add.text(CFG.W + 80, 92, m + ' m', {
       fontFamily: 'monospace', fontSize: '18px', color: '#41f6f6', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(15);
@@ -464,6 +539,8 @@ class GameScene extends Phaser.Scene {
   }
 
   nearMiss(o) {
+    AudioSys.nearmiss();
+    this.addTrauma(0.12);
     this.stats.runNear += 1;
     this.combo += 1;
     this.mult = Math.min(1 + Math.floor(this.combo / CFG.COMBO_PER_MULT), CFG.COMBO_MAX_MULT);
@@ -489,8 +566,14 @@ class GameScene extends Phaser.Scene {
   // ---------- Game-Loop ----------
 
   update(time, delta) {
-    if (this.dead) return;
     const dt = delta / 1000;
+    if (this.dead) {
+      // Knock-back-Bogen weiterzeichnen + Shake ausklingen lassen
+      this.updateShake(dt);
+      const b = this.player.body;
+      this.playerSpr.setPosition(Math.round(b.center.x), Math.round(b.bottom));
+      return;
+    }
     this.elapsed += delta;
 
     // Speed-Ramp mit Plateaus, Cap bei 90 s; OVERDRIVE +30 %
@@ -515,6 +598,15 @@ class GameScene extends Phaser.Scene {
     this.updatePowerups(time);
     this.updateScoring(time);
     this.updateHud(time);
+    this.updateShake(dt);
+
+    // Speed-Lines am Bildschirmrand bei hohem Tempo
+    if (this.speed > 270 && time - this.lastSpeedLineAt > 120) {
+      this.lastSpeedLineAt = time;
+      const y = 24 + Math.random() * 190;
+      const line = this.add.rectangle(CFG.W + 12, y, 16, 1, 0xffffff, 0.3).setDepth(7);
+      this.tweens.add({ targets: line, x: -20, duration: 320, ease: 'Linear', onComplete: () => line.destroy() });
+    }
   }
 
   syncWorld(dt) {
@@ -551,10 +643,25 @@ class GameScene extends Phaser.Scene {
   updatePlayer(time, dt) {
     const body = this.player.body;
     const grounded = body.blocked.down || body.touching.down;
+    if (body.velocity.y > 40) this.lastFallV = body.velocity.y;
     if (grounded) {
       this.lastGroundedAt = time;
       this.jumpsUsed = 0;
+      // Landung: Wolke + Squash + Thud, skaliert mit Fallhöhe
+      if (!this.wasGrounded && !this.odActive) {
+        const force = Math.min(this.lastFallV / CFG.MAX_FALL, 1);
+        AudioSys.land(force);
+        this.squash(1.28, 0.74);
+        this.dust(this.player.x, CFG.GROUND_Y, Math.round(3 + force * 7));
+        this.lastFallV = 0;
+      }
+      // Lauf-Staub hinter den Füßen
+      if (!this.sliding && time - this.lastDustAt > 110) {
+        this.lastDustAt = time;
+        this.dust(this.player.x - 7, CFG.GROUND_Y, 1);
+      }
     }
+    this.wasGrounded = grounded;
 
     if (this.odActive) {
       // Hold-to-fly (Jetpack-Physik), gleiche Ein-Knopf-Steuerung
@@ -576,9 +683,16 @@ class GameScene extends Phaser.Scene {
           this.doJump(CFG.JUMP_VEL);
           this.jumpsUsed = 1;
           this.endSlide();
+          // ≥3 Kanäle: Audio + Stretch + Staub
+          AudioSys.jump();
+          this.squash(0.78, 1.24);
+          this.dust(this.player.x, CFG.GROUND_Y, 5);
         } else if (this.jumpsUsed < 2) {
           this.doJump(CFG.DJUMP_VEL);
           this.jumpsUsed = 2;
+          AudioSys.djump();
+          this.squash(0.8, 1.2);
+          this.burst(this.player.x, this.player.body.bottom, 0x41f6f6, 7);
         }
       }
 
@@ -629,9 +743,20 @@ class GameScene extends Phaser.Scene {
           this.lastRain = time;
           this.makeCell(CFG.W + 16, 120 + Math.random() * 95);
         }
-        // letzte 2 s: Warn-Blinken
+        // letzte 2 s: Warn-Blinken + Ticken
         if (left < CFG.OVERDRIVE_WARN_MS) {
           this.playerSpr.setAlpha(Math.floor(time / 110) % 2 === 0 ? 0.5 : 1);
+          if (time - this.lastOdTickAt > 250) {
+            this.lastOdTickAt = time;
+            AudioSys.odTick();
+          }
+        }
+        // Motion-Trail während OVERDRIVE
+        if (time - this.lastTrailAt > 50) {
+          this.lastTrailAt = time;
+          const ghost = this.add.image(this.playerSpr.x, this.playerSpr.y, this.playerSpr.texture.key)
+            .setOrigin(0.5, 1).setDepth(5.5).setTint(0xffa040).setAlpha(0.35);
+          this.tweens.add({ targets: ghost, alpha: 0, x: ghost.x - 18, duration: 300, onComplete: () => ghost.destroy() });
         }
       }
     }
@@ -677,6 +802,8 @@ class GameScene extends Phaser.Scene {
         this.ghostLabel.setVisible(false);
         this.toast('NEUE BESTMARKE!', '#41f6f6');
         this.burst(this.player.x, this.player.y - 30, 0x41f6f6, 18);
+        AudioSys.fanfare();
+        this.addTrauma(0.25);
       } else if (gx < CFG.W + 10) {
         this.ghostLine.setPosition(gx, CFG.H / 2 + 20).setVisible(true);
         this.ghostLabel.setPosition(gx, 56).setVisible(true);
@@ -715,6 +842,9 @@ class GameScene extends Phaser.Scene {
     const p = CFG.PLAYER;
     this.player.body.setSize(p.hitW, p.slideH);
     this.player.body.setOffset((p.drawW - p.hitW) / 2, p.drawH - p.slideH);
+    AudioSys.slideStart();
+    this.squash(1.25, 0.7);
+    this.dust(this.player.x - 6, CFG.GROUND_Y, 4);
   }
 
   endSlide() {
@@ -723,6 +853,55 @@ class GameScene extends Phaser.Scene {
     const p = CFG.PLAYER;
     this.player.body.setSize(p.hitW, p.hitH);
     this.player.body.setOffset((p.drawW - p.hitW) / 2, p.drawH - p.hitH);
+    AudioSys.slideStop();
+  }
+
+  // ---------- Juice-Helfer (Konzept 2.6) ----------
+
+  // Squash & Stretch: Sprite-Skalierung federt zurück
+  squash(sx, sy) {
+    this.playerSpr.setScale(sx, sy);
+    this.tweens.add({ targets: this.playerSpr, scaleX: 1, scaleY: 1, duration: 160, ease: 'Back.easeOut' });
+  }
+
+  // 1–2 Frames Weiß-Flash auf dem Helden
+  flash(color = 0xffffff) {
+    this.playerSpr.setTintFill(color);
+    this.time.delayedCall(50, () => { if (!this.dead) this.playerSpr.clearTint(); });
+  }
+
+  // Hit-Stop: 2–4 Frames Freeze
+  hitStop(ms = 55) {
+    this.physics.world.timeScale = 60;
+    this.time.delayedCall(ms, () => { this.physics.world.timeScale = this.dead ? 5 : 1; });
+  }
+
+  // trauma-basierter Shake, in Game-Pixeln gerundet (sonst Blur)
+  addTrauma(amount) {
+    this.trauma = Math.min(this.trauma + amount, 1);
+  }
+
+  updateShake(dt) {
+    if (this.trauma <= 0) {
+      this.cameras.main.setScroll(0, 0);
+      return;
+    }
+    this.trauma = Math.max(this.trauma - dt * 1.6, 0);
+    const mag = this.trauma * this.trauma * 6;
+    this.cameras.main.setScroll(
+      Math.round((Math.random() * 2 - 1) * mag),
+      Math.round((Math.random() * 2 - 1) * mag)
+    );
+  }
+
+  // Lauf-Staub / Lande-Wolke
+  dust(x, y, count) {
+    const em = this.add.particles(x, y, 'px', {
+      speed: { min: 15, max: 50 }, angle: { min: 200, max: 340 }, lifespan: 350,
+      scale: { start: 1.2, end: 0 }, tint: 0x8a8aa8, emitting: false,
+    }).setDepth(5);
+    em.explode(count);
+    this.time.delayedCall(420, () => em.destroy());
   }
 }
 
