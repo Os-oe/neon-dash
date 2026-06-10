@@ -3,3 +3,5 @@ node_modules/
 assets/_raw/
 .vercel
 .vercel/
+video/raw/
+video/*.mp4
