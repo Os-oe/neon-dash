@@ -1,0 +1,21 @@
+CLAUDE FABLE??? What the… 🤯
+
+Anthropic hat diese Woche sein neues KI-Modell veröffentlicht — Claude Fable 5. Ich wollte wissen, was es wirklich kann. Also habe ich ihm abends EINEN einzigen Auftrag gegeben:
+
+„Bau NEON DASH — einen Endless Runner im Pixel-Style, der sich wie ein echtes Arcade-Game anfühlt."
+
+Was dann komplett autonom passierte:
+→ Erst ein grauer Prototyp — selbst getestet per Browser-Automation. Weiter ging's erst, als der Kern Spaß machte.
+→ Alle 35 Pixel-Assets mit Bild-KI generiert und aufs Retro-Raster gerechnet.
+→ Die Sound-API fiel aus? Hat sich kurzerhand einen eigenen Chiptune-Synthesizer geschrieben. Hat ihm niemand gesagt.
+→ Selbst deployed. 2.000+ Zeilen Code. 0 Zeilen von Hand.
+
+Und als wäre das nicht genug: Die KI hat sich selbst auf Platz 1 der Bestenliste gesetzt — 1.444 Punkte. Schlag sie, wenn du kannst.
+
+Die eigentliche Nachricht ist nicht das Spiel: „Das bauen wir irgendwann" heißt jetzt „heute Abend". Demo-Website, internes Tool, Prototyp — die Hürde ist kollabiert.
+
+Was würdest du bauen lassen, wenn ein Abend reicht?
+
+(Spiel-Link + kompletter Prompt + Making-of-PDF: kurzer Kommentar genügt, kommt per DM.)
+
+#KI #ClaudeAI #Webentwicklung #BuildInPublic #GameDev
