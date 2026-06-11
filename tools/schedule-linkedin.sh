@@ -11,7 +11,7 @@ SCHEDULE="2026-06-12T07:30:00Z"   # = 09:30 Europe/Berlin
 DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "→ LinkedIn-Account suchen…"
-ACC=$(curl -s "${H[@]}" "$API/accounts")
+ACC=$(curl -s "${H[@]}" "$API/users/me/accounts")
 ACC_ID=$(echo "$ACC" | jq -r '(.items // .accounts // .) | map(select(.platform=="linkedin")) | .[0].id')
 [ "$ACC_ID" != "null" ] && [ -n "$ACC_ID" ] || { echo "Kein LinkedIn-Account gefunden:"; echo "$ACC" | head -c 400; exit 1; }
 echo "   accountId: $ACC_ID"
