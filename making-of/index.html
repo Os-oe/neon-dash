@@ -74,11 +74,46 @@
   <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>Making-of · Juni 2026</span></div>
 </div>
 
-<!-- SEITE 2 — Der Prompt -->
+<!-- SEITE 2 — Die Vorgehensweise -->
 <div class="page">
-  <h2><span class="nr">01</span>DER AUFTRAG — EIN EINZIGER PROMPT</h2>
-  <p>Kein Lastenheft, kein Sprint-Planning, kein Entwicklerteam. Ein <b>/goal</b>-Auftrag an Claude,
-  abends abgeschickt (gekürzt — die Struktur ist das Entscheidende):</p>
+  <h2><span class="nr">01</span>DIE VORGEHENSWEISE — ZWEI SESSIONS, EIN WORKFLOW</h2>
+  <p><b>Kurz erklärt:</b> Ein KI-Agent ist mehr als ein Chatbot — er kann Dateien lesen und schreiben,
+  Programme ausführen, im Browser testen und deployen. Claude Code bietet dafür eine
+  <b class="accent">/goal</b>-Funktion: Man gibt ein Ziel vor, und der Agent arbeitet selbstständig
+  daran, bis es erreicht ist — über Stunden, ohne Rückfragen. Entscheidend ist, <i>was</i> man ihm
+  als Ziel mitgibt. Deshalb lief dieses Projekt in zwei getrennten Sessions:</p>
+
+  <div class="phase" style="margin-top:16px"><div class="dot" style="border-color:var(--yellow);color:var(--yellow)">A</div><div>
+    <h3>Session 1 — Planen lassen (der Mensch denkt mit)</h3>
+    <p>Die Idee in Alltagssprache beschrieben: <i>„Ich will ein Endless-Runner-Mini-Game im Pixel-Style,
+    richtig juicy — plane das und gib mir einen fertigen Prompt."</i> Claude schickte daraufhin
+    <b>drei parallele Recherche-Agenten</b> los (Game-Design · Technik/Assets · Spielgefühl/Sound) und
+    verdichtete die Ergebnisse in zwei Dateien:</p>
+    <p style="margin-top:5px">→ <b class="accent">CONCEPT.md</b> — das komplette Spielkonzept: Mechaniken, Fallen-Design,
+    Asset-Pipeline, Sound-Liste, Phasenplan mit Quality-Gates<br>
+    → <b class="accent">GOAL-PROMPT.md</b> — der fertige, präzise Auftrag für die Umsetzung</p>
+  </div></div>
+
+  <div class="phase"><div class="dot">B</div><div>
+    <h3>Session 2 — Bauen lassen (der Agent übernimmt)</h3>
+    <p>In einer <b>frischen Session</b> wurde der Prompt per <b class="accent">/goal</b> übergeben. Der Agent las
+    zuerst das Konzept (CONCEPT.md) und die Studio-Konventionen (CLAUDE.md — Regeln zu Budget-Limits,
+    Asset-Registrierung, Deploy-Mustern), und arbeitete dann die fünf Phasen ab: bauen → selbst testen →
+    Gate bewerten → weiter. Mensch nötig: <b>null Eingriffe</b> bis zum fertigen Deploy.</p>
+  </div></div>
+
+  <div class="callout"><b class="gold">Warum die Trennung?</b> Planung und Umsetzung sind verschiedene Denkmodi.
+  Die Planungs-Session darf diskutieren, recherchieren, verwerfen. Die Bau-Session bekommt ein
+  eingefrorenes, recherchiertes Konzept — und kann dadurch stundenlang autonom laufen, ohne sich zu
+  verlaufen. Das Konzept ist der Vertrag: „Bei Widerspruch gilt das Konzept" steht wörtlich im Prompt.</div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>02</span></div>
+</div>
+
+<!-- SEITE 3 — Der Prompt -->
+<div class="page">
+  <h2><span class="nr">02</span>DER AUFTRAG — EIN EINZIGER PROMPT</h2>
+  <p>Kein Lastenheft, kein Sprint-Planning, kein Entwicklerteam. Der <b>/goal</b>-Auftrag aus Session 2
+  (gekürzt — die Struktur ist das Entscheidende). Erste Anweisung: das Konzept aus Session 1 lesen.</p>
   <pre class="prompt"><span class="hl">Baue „NEON DASH"</span> — ein Endless-Runner-Mini-Game im Pixel-Style, das sich
 wie ein kommerzielles Arcade-Game anfühlt. Das vollständige Konzept liegt
 in CONCEPT.md — LIES ES ZUERST KOMPLETT und folge ihm.
@@ -103,12 +138,12 @@ Hold-to-fly-Physik). Combo, Near-Miss-Boni, Missionen, 3 Skins.
 dritten Tod sofort den vierten Run starten.</pre>
   <p style="margin-top:12px">Der Rest — jede Architektur-Entscheidung, jeder Bug-Fix, jeder Asset-Prompt,
   jeder Commit — kam von der KI selbst.</p>
-  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>02</span></div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>03</span></div>
 </div>
 
-<!-- SEITE 3 — Die 5 Phasen -->
+<!-- SEITE 4 — Die 5 Phasen -->
 <div class="page">
-  <h2><span class="nr">02</span>FÜNF PHASEN, FÜNF QUALITY-GATES</h2>
+  <h2><span class="nr">03</span>FÜNF PHASEN, FÜNF QUALITY-GATES</h2>
   <div class="phase"><div class="dot">1</div><div>
     <h3>Greybox — erst Spielgefühl, dann alles andere</h3>
     <p>Spielbarer Kern nur aus farbigen Rechtecken. Die KI testete sich selbst per Browser-Automation
@@ -143,12 +178,38 @@ dritten Tod sofort den vierten Run starten.</pre>
   eingegriffen. Die KI erkannte das Problem, entschied sich für einen Plan B und baute ihn — ein
   prozeduraler Synthesizer passt sogar besser zum Retro-Stil. Das ist der Unterschied zwischen
   einem Werkzeug und einem Agenten.</div>
-  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>03</span></div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>04</span></div>
 </div>
 
-<!-- SEITE 4 — Screenshots -->
+<!-- SEITE 5 — Skills & Asset-Pipeline -->
 <div class="page">
-  <h2><span class="nr">03</span>DAS ERGEBNIS</h2>
+  <h2><span class="nr">04</span>WERKZEUGE, SKILLS & ASSET-PIPELINE</h2>
+  <p>Der Agent griff auf vorbereitete <b>Skills</b> zurück — wiederverwendbare Fähigkeiten mit klaren
+  Regeln (welche API, welche Kosten, wie registrieren). Diese kamen zum Einsatz:</p>
+  <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin:10px 0 14px">
+    <tr style="color:#fff;border-bottom:1.5px solid var(--line);text-align:left">
+      <th style="padding:5px 8px 5px 0">Skill / Werkzeug</th><th style="padding:5px 0">Aufgabe im Projekt</th></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">gpt-image-2</b> (OpenAI)</td><td>Held-Sprite, 4 Parallax-Stadtebenen, das NEON-DASH-Logo</td></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">image</b> (Nano Banana 2)</td><td>Posen-Serie &amp; alle weiteren Assets — mit dem Helden als Stil-Referenz für Konsistenz</td></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">music</b> (Suno)</td><td>Synthwave-Soundtrack-Loop, 125 BPM</td></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">sound-effect</b> → Plan B</td><td>API war ausgefallen → Agent schrieb einen eigenen WebAudio-Chiptune-Synthesizer (16 Effekte)</td></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">webapp-testing</b> (Playwright)</td><td>Selbsttests im echten Browser: Physik, Power-ups, Touch, Restart-Zeit — 26 Checks pro Lauf</td></tr>
+    <tr style="border-bottom:1px solid var(--line)"><td style="padding:5px 8px 5px 0"><b class="accent">budget-guard</b></td><td>Kostenkontrolle: jede kostenpflichtige Generierung vorab geprüft &amp; verbucht</td></tr>
+    <tr><td style="padding:5px 8px 5px 0"><b class="accent">GitHub + Vercel</b></td><td>Repo, Hosting, eigene Domain, Bestenlisten-Backend — alles vom Agenten eingerichtet</td></tr>
+  </table>
+  <p><b>Die Asset-Pipeline</b> — KI-Bildmodelle liefern nur <i>fake</i> Pixel-Art (1024 px, weiche Kanten,
+  driftendes Raster). Deshalb wurde jedes Bild auf Magenta-Hintergrund generiert, aufs <b>echte
+  Spiel-Raster</b> heruntergerechnet, auf eine feste 16-Farben-Palette gemappt und freigestellt:</p>
+  <img class="shot" src="shots/pipeline-hero.png" style="width:72%;display:block;margin:6px auto">
+  <div class="cap" style="text-align:center">Vorher/Nachher: AI-Rohbild → spielfertiges Sprite (Pixel = Pixel)</div>
+  <img class="shot" src="shots/pipeline-poses.png" style="margin-top:4px">
+  <div class="cap">Die Posen-Serie (Lauf ×4, Sprung, Slide, OVERDRIVE, Tod) — per Bild-zu-Bild mit Stil-Anker generiert</div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>05</span></div>
+</div>
+
+<!-- SEITE 6 — Screenshots -->
+<div class="page">
+  <h2><span class="nr">05</span>DAS ERGEBNIS</h2>
   <div class="grid2">
     <div><img class="shot" src="shots/title.png"><div class="cap">Title-Screen — Logo, Skins, Bestenliste</div></div>
     <div><img class="shot" src="shots/gameplay.png"><div class="cap">Run — Parallax-Stadt, Combo, Energie-Zellen</div></div>
@@ -156,12 +217,12 @@ dritten Tod sofort den vierten Run starten.</pre>
     <div><img class="shot" src="shots/gameover.png"><div class="cap">Game Over — Score-Bilanz, Missionen, Share</div></div>
   </div>
   <div style="margin-top:6px"><img class="shot" src="shots/leaderboard.png"><div class="cap">Globale Bestenliste — die KI („CLAUDE", 1.444 Punkte) wartet auf Platz 1. Schlagen Sie sie?</div></div>
-  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>04</span></div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>06</span></div>
 </div>
 
-<!-- SEITE 5 — Business + CTA -->
+<!-- SEITE 7 — Business + CTA -->
 <div class="page">
-  <h2><span class="nr">04</span>WAS HEISST DAS FÜR IHR UNTERNEHMEN?</h2>
+  <h2><span class="nr">06</span>WAS HEISST DAS FÜR IHR UNTERNEHMEN?</h2>
   <p>Das Spiel ist eine Demo. Die eigentliche Nachricht: <b>Die Eintrittshürde für Software ist kollabiert.</b>
   Was früher ein Projektteam und Wochen brauchte, ist heute ein präzise formulierter Auftrag und ein Abend.</p>
   <ul class="biglist" style="margin:14px 0 6px">
@@ -180,7 +241,7 @@ dritten Tod sofort den vierten Run starten.</pre>
     <p style="margin-top:22px"><img src="osai-mark.png" style="height:42px;vertical-align:middle;margin-right:14px"><span class="px" style="font-size:19px;color:#fff;vertical-align:middle">OsAI</span></p>
     <p style="color:var(--dim);font-size:11px;margin-top:8px">osai.solutions · Osman Öztopcu</p>
   </div>
-  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>05</span></div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>07</span></div>
 </div>
 
 </body>
