@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>NEON DASH — Making-of</title>
+<style>
+  @font-face { font-family: 'PixelHead'; src: url('PressStart2P.ttf'); }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #11131f; --panel: #1a1c2c; --line: #33345c;
+    --cyan: #41f6f6; --magenta: #ff2079; --orange: #ff8c42; --yellow: #ffd24a;
+    --txt: #c8d6ff; --dim: #8a8aa8;
+  }
+  body { background: var(--bg); color: var(--txt); font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; line-height: 1.55; }
+  .page { width: 210mm; height: 296mm; padding: 18mm 17mm; page-break-after: always; position: relative; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: avoid; }
+  h1, h2, .px { font-family: 'PixelHead', monospace; }
+  h2 { color: #fff; font-size: 17px; margin-bottom: 18px; line-height: 1.5; }
+  h2 .nr { color: var(--magenta); margin-right: 10px; }
+  p { margin-bottom: 10px; }
+  .accent { color: var(--cyan); } .warm { color: var(--orange); } .gold { color: var(--yellow); }
+  .footer { position: absolute; bottom: 11mm; left: 17mm; right: 17mm; display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 9.5px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .footer img { height: 14px; vertical-align: middle; margin-right: 6px; }
+  img.shot { width: 100%; border: 2px solid var(--line); border-radius: 4px; image-rendering: pixelated; }
+  .cap { font-size: 10px; color: var(--dim); margin: 5px 0 14px; }
+
+  /* Cover */
+  .cover { justify-content: center; text-align: center; }
+  .cover .pres { font-family: 'PixelHead', monospace; font-size: 10px; color: var(--dim); letter-spacing: 1px; margin-bottom: 26px; }
+  .cover .pres img { height: 22px; vertical-align: middle; margin-right: 10px; }
+  .cover img.logo { width: 64%; margin: 0 auto 30px; image-rendering: pixelated; }
+  .cover h1 { font-size: 21px; color: #fff; line-height: 1.9; margin-bottom: 16px; }
+  .cover h1 .big { font-size: 27px; color: var(--orange); }
+  .cover .sub { color: var(--txt); font-size: 14px; max-width: 78%; margin: 0 auto 34px; }
+  .cover .stats { display: flex; justify-content: center; gap: 14px; }
+  .cover .stat { background: var(--panel); border: 1.5px solid var(--line); border-radius: 6px; padding: 13px 17px; min-width: 100px; }
+  .cover .stat b { display: block; font-family: 'PixelHead', monospace; font-size: 15px; color: var(--cyan); margin-bottom: 7px; }
+  .cover .stat span { font-size: 10px; color: var(--dim); }
+
+  pre.prompt { background: #0b0b12; border: 1.5px solid var(--line); border-left: 4px solid var(--magenta); border-radius: 4px; padding: 14px 16px; font-family: Menlo, monospace; font-size: 9.6px; line-height: 1.65; color: var(--txt); white-space: pre-wrap; }
+  pre.prompt .hl { color: var(--cyan); }
+
+  .phase { display: flex; gap: 14px; margin-bottom: 15px; }
+  .phase .dot { font-family: 'PixelHead', monospace; flex: 0 0 34px; height: 34px; border-radius: 50%; background: var(--panel); border: 2px solid var(--cyan); color: var(--cyan); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .phase h3 { color: #fff; font-size: 13px; margin-bottom: 3px; }
+  .phase p { font-size: 11.5px; color: var(--txt); margin: 0; }
+  .phase .gate { color: var(--yellow); font-size: 10.5px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .callout { background: var(--panel); border: 1.5px solid var(--line); border-left: 4px solid var(--orange); border-radius: 4px; padding: 12px 15px; font-size: 11.5px; margin: 14px 0; }
+
+  .cta { text-align: center; margin-top: 26px; }
+  .cta .px { font-size: 13px; color: #fff; margin-bottom: 14px; line-height: 1.8; }
+  .cta .link { font-family: 'PixelHead', monospace; font-size: 13px; color: var(--cyan); margin-bottom: 26px; }
+  .biglist li { margin-bottom: 9px; }
+  ul { padding-left: 18px; }
+</style>
+</head>
+<body>
+
+<!-- SEITE 1 — Cover -->
+<div class="page cover">
+  <div class="pres"><img src="osai-mark.png" alt="">OsAI präsentiert</div>
+  <img class="logo" src="game-logo.png" alt="NEON DASH">
+  <h1>EIN PROMPT.<br><span class="big">EIN SPIEL.</span></h1>
+  <p class="sub">Wie <b class="warm">Claude Fable 5</b> — Anthropics neues KI-Modell — aus einem einzigen
+  Auftrag ein komplettes Arcade-Game gebaut hat: Code, Pixel-Art, Sound, Tests und Deployment. Autonom, an einem Abend.</p>
+  <div class="stats">
+    <div class="stat"><b>1</b><span>Prompt</span></div>
+    <div class="stat"><b>2.000+</b><span>Zeilen Code</span></div>
+    <div class="stat"><b>35</b><span>KI-Assets</span></div>
+    <div class="stat"><b>0</b><span>Zeilen von Hand</span></div>
+  </div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>Making-of · Juni 2026</span></div>
+</div>
+
+<!-- SEITE 2 — Der Prompt -->
+<div class="page">
+  <h2><span class="nr">01</span>DER AUFTRAG — EIN EINZIGER PROMPT</h2>
+  <p>Kein Lastenheft, kein Sprint-Planning, kein Entwicklerteam. Ein <b>/goal</b>-Auftrag an Claude,
+  abends abgeschickt (gekürzt — die Struktur ist das Entscheidende):</p>
+  <pre class="prompt"><span class="hl">Baue „NEON DASH"</span> — ein Endless-Runner-Mini-Game im Pixel-Style, das sich
+wie ein kommerzielles Arcade-Game anfühlt. Das vollständige Konzept liegt
+in CONCEPT.md — LIES ES ZUERST KOMPLETT und folge ihm.
+
+<span class="hl">KERN:</span> Phaser 3, 480×270, Integer-Scaling. Statische Site, kein Backend.
+Coyote-Time ~90ms, Input-Buffer ~100ms, Fall-Gravitation 2× — PFLICHT.
+15–20 handgebaute Pattern-Chunks, 6 Fallentypen mit Telegraphing,
+4 Power-ups inkl. OVERDRIVE-Mega-Modus (Slow-Mo + Screen-Clear,
+Hold-to-fly-Physik). Combo, Near-Miss-Boni, Missionen, 3 Skins.
+
+<span class="hl">PHASEN MIT GATES</span> (nacheinander, Gate ernst nehmen):
+1. Greybox: spielbarer Kern nur mit Rechtecken. GATE: per Playwright
+   verifizieren — macht die Greybox schon Spaß? Erst dann weiter.
+2. Systeme: alle Fallen, Power-ups, Scoring, Missionen.
+3. Assets: GPT Image 2 + Nano Banana 2. AI-Output NIE roh verwenden:
+   auf echtes Pixel-Grid downscalen, Palette remappen.
+4. Audio + Juice: ~15 SFX, Synthwave-Loop, Hit-Stop, Screen-Shake,
+   Squash & Stretch — jede Aktion ≥3 Feedback-Kanäle.
+5. Polish + Ship: Mobile testen, Title-Screen, Deploy auf eigene Domain.
+
+<span class="hl">ERFOLGSKRITERIUM:</span> Ich öffne die URL, drücke Space und will nach dem
+dritten Tod sofort den vierten Run starten.</pre>
+  <p style="margin-top:12px">Der Rest — jede Architektur-Entscheidung, jeder Bug-Fix, jeder Asset-Prompt,
+  jeder Commit — kam von der KI selbst.</p>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>02</span></div>
+</div>
+
+<!-- SEITE 3 — Die 5 Phasen -->
+<div class="page">
+  <h2><span class="nr">02</span>FÜNF PHASEN, FÜNF QUALITY-GATES</h2>
+  <div class="phase"><div class="dot">1</div><div>
+    <h3>Greybox — erst Spielgefühl, dann alles andere</h3>
+    <p>Spielbarer Kern nur aus farbigen Rechtecken. Die KI testete sich selbst per Browser-Automation
+    (Sprung-Physik, Kollision, Restart-Zeit) und bewertete: macht das schon Spaß?</p>
+    <p class="gate">⚑ Gate bestanden: Playwright-Suite grün, Restart in 0,3 s</p>
+  </div></div>
+  <div class="phase"><div class="dot">2</div><div>
+    <h3>Systeme — die ganze Spieltiefe</h3>
+    <p>6 Fallentypen mit fairem Telegraphing, 16 handgebaute Level-Bausteine, 4 Power-ups inkl.
+    OVERDRIVE mit Physikwechsel, Combo- & Near-Miss-Scoring, rotierende Missionen, Skins.</p>
+    <p class="gate">⚑ Gate: 26 automatisierte Tests, zweimal hintereinander fehlerfrei</p>
+  </div></div>
+  <div class="phase"><div class="dot">3</div><div>
+    <h3>Assets — KI-Pixel-Art mit Stil-Anker</h3>
+    <p>Held-Sprite mit GPT Image 2 erzeugt, dann 30+ Assets per Nano Banana 2 mit dem Helden als
+    Referenz — und jede Grafik aufs echte Pixel-Raster heruntergerechnet. 3 Skins als Palette-Swap: kostenlos.</p>
+    <p class="gate">⚑ Gate: Sichtprüfung — Stil über alle 35 Assets konsistent</p>
+  </div></div>
+  <div class="phase"><div class="dot">4</div><div>
+    <h3>Audio + Juice — 50 % des Spielgefühls</h3>
+    <p>Die Sound-API fiel aus — die KI schrieb sich kurzerhand einen eigenen Chiptune-Synthesizer
+    (16 Effekte, Pitch-Leiter wie bei Mario). Dazu: Hit-Stop, Screen-Shake, Partikel, Slow-Mo-Tod.</p>
+    <p class="gate">⚑ Gate: komplette Juice-Checkliste abgehakt, jede Aktion ≥3 Feedback-Kanäle</p>
+  </div></div>
+  <div class="phase"><div class="dot">5</div><div>
+    <h3>Polish + Ship — live in der echten Welt</h3>
+    <p>Touch-Steuerung, Title-Screen, Balancing — dann GitHub-Repo, Vercel-Deploy und eigene Domain.
+    Später dazu: globale Bestenliste mit eigenem Backend.</p>
+    <p class="gate">⚑ Gate: End-to-End-Test gegen die Live-URL, auch mobil</p>
+  </div></div>
+  <div class="callout"><b class="warm">Der Moment, der hängen bleibt:</b> Als die externe Sound-API ausfiel, hat niemand
+  eingegriffen. Die KI erkannte das Problem, entschied sich für einen Plan B und baute ihn — ein
+  prozeduraler Synthesizer passt sogar besser zum Retro-Stil. Das ist der Unterschied zwischen
+  einem Werkzeug und einem Agenten.</div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>03</span></div>
+</div>
+
+<!-- SEITE 4 — Screenshots -->
+<div class="page">
+  <h2><span class="nr">03</span>DAS ERGEBNIS</h2>
+  <div class="grid2">
+    <div><img class="shot" src="shots/title.png"><div class="cap">Title-Screen — Logo, Skins, Bestenliste</div></div>
+    <div><img class="shot" src="shots/gameplay.png"><div class="cap">Run — Parallax-Stadt, Combo, Energie-Zellen</div></div>
+    <div><img class="shot" src="shots/overdrive.png"><div class="cap">OVERDRIVE — Flugmodus, Coin-Regen, Trail</div></div>
+    <div><img class="shot" src="shots/gameover.png"><div class="cap">Game Over — Score-Bilanz, Missionen, Share</div></div>
+  </div>
+  <div style="margin-top:6px"><img class="shot" src="shots/leaderboard.png"><div class="cap">Globale Bestenliste — die KI („CLAUDE", 1.444 Punkte) wartet auf Platz 1. Schlagen Sie sie?</div></div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>04</span></div>
+</div>
+
+<!-- SEITE 5 — Business + CTA -->
+<div class="page">
+  <h2><span class="nr">04</span>WAS HEISST DAS FÜR IHR UNTERNEHMEN?</h2>
+  <p>Das Spiel ist eine Demo. Die eigentliche Nachricht: <b>Die Eintrittshürde für Software ist kollabiert.</b>
+  Was früher ein Projektteam und Wochen brauchte, ist heute ein präzise formulierter Auftrag und ein Abend.</p>
+  <ul class="biglist" style="margin:14px 0 6px">
+    <li><b class="accent">Demo-Website</b> für Ihren Betrieb — sehen, wie Ihr Auftritt aussehen könnte, bevor Sie etwas unterschreiben.</li>
+    <li><b class="accent">Interne Tools</b> — der Excel-Prozess, der seit Jahren nervt, als kleine Web-App.</li>
+    <li><b class="accent">Prototypen</b> — die Produktidee aus der Schublade als klickbares MVP, in Tagen statt Quartalen.</li>
+    <li><b class="accent">Automatisierungen</b> — Angebote, Berichte, Datenpflege: was sich wiederholt, kann ein Agent übernehmen.</li>
+  </ul>
+  <div class="callout">Genau dafür gibt es <b>OsAI</b>: KI-Lösungen, moderne Websites und Automatisierung
+  für kleine und mittlere Unternehmen — pragmatisch, bezahlbar, ohne Buzzword-Theater.</div>
+  <div class="cta">
+    <p class="px">SPIELEN SIE EINE RUNDE — UND DANN<br>REDEN WIR ÜBER IHR PROJEKT.</p>
+    <p class="link">neon-dash.demo.osai.solutions</p>
+    <p style="margin-bottom:6px"><b>15-Minuten-Erstgespräch</b> — unverbindlich, direkt buchbar:</p>
+    <p class="link" style="font-size:11px">cal.com/osai-solutions/erstgespraech</p>
+    <p style="margin-top:22px"><img src="osai-mark.png" style="height:42px;vertical-align:middle;margin-right:14px"><span class="px" style="font-size:19px;color:#fff;vertical-align:middle">OsAI</span></p>
+    <p style="color:var(--dim);font-size:11px;margin-top:8px">osai.solutions · Osman Öztopcu</p>
+  </div>
+  <div class="footer"><span><img src="osai-mark.png">OsAI · osai.solutions</span><span>05</span></div>
+</div>
+
+</body>
+</html>
